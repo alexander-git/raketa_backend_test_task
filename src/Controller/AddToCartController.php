@@ -1,50 +1,50 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Raketa\BackendTestTask\Controller;
 
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use Raketa\BackendTestTask\Domain\CartItem;
-use Raketa\BackendTestTask\Repository\CartManager;
-use Raketa\BackendTestTask\Repository\ProductRepository;
-use Raketa\BackendTestTask\View\CartView;
-use Ramsey\Uuid\Uuid;
+use Raketa\BackendTestTask\Controller\Helper\RequestHelper;
+use Raketa\BackendTestTask\Domain\Exception\CartNotFoundException;
+use Raketa\BackendTestTask\Domain\Exception\ProductNotFoundException;
+use Raketa\BackendTestTask\Domain\Service\CartService;
+use Raketa\BackendTestTask\Infrastructure\Response\JsonResponseFactory;
+use Raketa\BackendTestTask\Infrastructure\Service\Auth\AuthServiceInterface;
+use Raketa\BackendTestTask\Infrastructure\Service\Auth\Exception\UnauthorizedException;
 
 readonly class AddToCartController
 {
     public function __construct(
-        private ProductRepository $productRepository,
-        private CartView $cartView,
-        private CartManager $cartManager,
+        private CartService $cartService,
+        private AuthServiceInterface $authService,
+        private RequestHelper $requestHelper,
+        private JsonResponseFactory $jsonResponseFactory
     ) {
     }
 
-    public function get(RequestInterface $request): ResponseInterface
+    public function __invoke(RequestInterface $request): ResponseInterface
     {
-        $rawRequest = json_decode($request->getBody()->getContents(), true);
-        $product = $this->productRepository->getByUuid($rawRequest['productUuid']);
+        try {
+            $userIdentifier = $this->authService->getUserIdentifier($request);
+        } catch (UnauthorizedException $e) {
+            return $this->jsonResponseFactory->createUnauthorizedResponse($e->getMessage());
+        }
 
-        $cart = $this->cartManager->getCart();
-        $cart->addItem(new CartItem(
-            Uuid::uuid4()->toString(),
-            $product->getUuid(),
-            $product->getPrice(),
-            $rawRequest['quantity'],
-        ));
+        $requestData = $this->requestHelper->getDataFromJsonRequestBody($request);
+        try {
+            $this->cartService->addProductToUserCart(
+                $userIdentifier,
+                $requestData['productUuid'],
+                $requestData['quantity']
+            );
+        } catch (ProductNotFoundException) {
+            return $this->jsonResponseFactory->createUnprocessableEntityResponse('Продукт не найден');
+        } catch (CartNotFoundException) {
+            return $this->jsonResponseFactory->createNotFoundResponse('Корзина не найдена');
+        }
 
-        $response = new JsonResponse();
-        $response->getBody()->write(
-            json_encode(
-                [
-                    'status' => 'success',
-                    'cart' => $this->cartView->toArray($cart)
-                ],
-                JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES
-            )
-        );
-
-        return $response
-            ->withHeader('Content-Type', 'application/json; charset=utf-8')
-            ->withStatus(200);
+        return $this->jsonResponseFactory->createEmptySuccessResponse();
     }
 }

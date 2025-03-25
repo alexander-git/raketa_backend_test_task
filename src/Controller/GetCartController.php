@@ -6,44 +6,39 @@ namespace Raketa\BackendTestTask\Controller;
 
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use Raketa\BackendTestTask\Repository\CartManager;
+use Raketa\BackendTestTask\Domain\Exception\CartNotFoundException;
+use Raketa\BackendTestTask\Domain\Service\CartService;
+use Raketa\BackendTestTask\Infrastructure\Response\JsonResponseFactory;
+use Raketa\BackendTestTask\Infrastructure\Service\Auth\AuthServiceInterface;
+use Raketa\BackendTestTask\Infrastructure\Service\Auth\Exception\UnauthorizedException;
 use Raketa\BackendTestTask\View\CartView;
 
 readonly class GetCartController
 {
     public function __construct(
-        public CartView $cartView,
-        public CartManager $cartManager
+        private CartService $cartService,
+        private AuthServiceInterface $authService,
+        private CartView $cartView,
+        private JsonResponseFactory $jsonResponseFactory,
     ) {
     }
 
-    public function get(RequestInterface $request): ResponseInterface
+    public function __invoke(RequestInterface $request): ResponseInterface
     {
-        $response = new JsonResponse();
-        $cart = $this->cartManager->getCart();
-
-        if (! $cart) {
-            $response->getBody()->write(
-                json_encode(
-                    ['message' => 'Cart not found'],
-                    JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES
-                )
-            );
-
-            return $response
-                ->withHeader('Content-Type', 'application/json; charset=utf-8')
-                ->withStatus(404);
-        } else {
-            $response->getBody()->write(
-                json_encode(
-                    $this->cartView->toArray($cart),
-                    JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES
-                )
-            );
+        try {
+            $userIdentifier = $this->authService->getUserIdentifier($request);
+        } catch (UnauthorizedException $e) {
+            return $this->jsonResponseFactory->createUnauthorizedResponse($e->getMessage());
         }
 
-        return $response
-            ->withHeader('Content-Type', 'application/json; charset=utf-8')
-            ->withStatus(404);
+        try {
+            $cartReadModel = $this->cartService->getCartReadModelByUserIdentifier($userIdentifier);
+        } catch (CartNotFoundException) {
+            return $this->jsonResponseFactory->createNotFoundResponse('Корзина не найдена');
+        }
+
+        return $this->jsonResponseFactory->createSuccessResponse(
+            $this->cartView->getViewData($cartReadModel)
+        );
     }
 }

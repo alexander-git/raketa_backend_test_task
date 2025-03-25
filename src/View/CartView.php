@@ -4,55 +4,28 @@ declare(strict_types = 1);
 
 namespace Raketa\BackendTestTask\View;
 
-use Raketa\BackendTestTask\Domain\Cart;
-use Raketa\BackendTestTask\Repository\ProductRepository;
+use Raketa\BackendTestTask\Domain\Model\CartItemReadModel;
+use Raketa\BackendTestTask\Domain\Model\CartReadModel;
 
 readonly class CartView
 {
-    public function __construct(
-        private ProductRepository $productRepository
-    ) {
-    }
-
-    public function toArray(Cart $cart): array
+    public function getViewData(CartReadModel $cartReadModel): array
     {
-        $data = [
-            'uuid' => $cart->getUuid(),
-            'customer' => [
-                'id' => $cart->getCustomer()->getId(),
-                'name' => implode(' ', [
-                    $cart->getCustomer()->getLastName(),
-                    $cart->getCustomer()->getFirstName(),
-                    $cart->getCustomer()->getMiddleName(),
-                ]),
-                'email' => $cart->getCustomer()->getEmail(),
-            ],
-            'payment_method' => $cart->getPaymentMethod(),
-        ];
-
-        $total = 0;
-        $data['items'] = [];
-        foreach ($cart->getItems() as $item) {
-            $total += $item->getPrice() * $item->getQuantity();
-            $product = $this->productRepository->getByUuid($item->getProductUuid());
-
-            $data['items'][] = [
-                'uuid' => $item->getUuid(),
-                'price' => $item->getPrice(),
-                'total' => $total,
+        $data['items'] = array_map(
+            fn (CartItemReadModel $item) => [
+                'productId' => $item->getProductId()->toString(),
+                'price' => $item->getPrice()->toString(),
                 'quantity' => $item->getQuantity(),
+                'totalPrice' => $item->getTotalPrice()->toString(),
                 'product' => [
-                    'id' => $product->getId(),
-                    'uuid' => $product->getUuid(),
-                    'name' => $product->getName(),
-                    'thumbnail' => $product->getThumbnail(),
-                    'price' => $product->getPrice(),
+                    'name' => $item->getProduct()->getName(),
+                    'thumbnail' => $item->getProduct()->getThumbnail(),
                 ],
-            ];
-        }
+            ],
+            $cartReadModel->getItems()
+        );
 
-        $data['total'] = $total;
-
+        $data['totalPrice'] = $cartReadModel->getTotalPrice()->toString();
         return $data;
     }
 }

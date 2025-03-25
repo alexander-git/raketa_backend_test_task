@@ -14,6 +14,7 @@
     "doctrine/dbal": "^4.1",
     "psr/log": "^3.0",
     "psr/http-message": "^2.0",
-    "ramsey/uuid": "^4.2"
+    "ramsey/uuid": "^4.2",
+    "nyholm/psr7": "^1.8"
   }
 }
