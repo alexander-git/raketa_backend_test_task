@@ -1,4 +1,2 @@
 .idea
 vendor
-composer.lock
-# composer.lock не должен быть в .gitignore
