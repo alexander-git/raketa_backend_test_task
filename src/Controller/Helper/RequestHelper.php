@@ -14,7 +14,7 @@ class RequestHelper
         return json_decode($request->getBody()->getContents(), true);
     }
 
-    // Извлекает часть из uri которая после /$prefix/ и до следующего слеша или конца строки.
+    // Извлекает часть из uri которая идёт после /$prefix/ до следующего слеша или конца строки.
     public function getPartAfterPrefixFromUri(RequestInterface $request, string $prefix): ?string
     {
         if ($prefix === '') {
