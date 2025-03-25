@@ -6,11 +6,11 @@ namespace Raketa\BackendTestTask\Controller;
 
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Raketa\BackendTestTask\Application\Service\Auth\AuthServiceInterface;
+use Raketa\BackendTestTask\Application\Service\Auth\Exception\UnauthorizedException;
 use Raketa\BackendTestTask\Domain\Exception\CartNotFoundException;
 use Raketa\BackendTestTask\Domain\Service\CartService;
 use Raketa\BackendTestTask\Infrastructure\Response\JsonResponseFactory;
-use Raketa\BackendTestTask\Infrastructure\Service\Auth\AuthServiceInterface;
-use Raketa\BackendTestTask\Infrastructure\Service\Auth\Exception\UnauthorizedException;
 use Raketa\BackendTestTask\View\CartView;
 
 readonly class GetCartController

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Raketa\BackendTestTask\Infrastructure\Service\Auth;
+namespace Raketa\BackendTestTask\Application\Service\Auth;
 
 use Psr\Http\Message\RequestInterface;
 
