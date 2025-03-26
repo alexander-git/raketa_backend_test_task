@@ -120,15 +120,15 @@ composer.lock не должен присутствовать в .gitignore
     ) {
     }
    ```
-Для $items указать тип с помощью PHPDoc.
+   Для $items указать тип с помощью PHPDoc.
 5.
-    ```
+   ```
     public function addItem(CartItem $item): void
     {
         $this->items[] = $item;
     }
    ```
-Метод не проверяет есть ли уже в корзине такой товар.
+   Метод не проверяет есть ли уже в корзине такой товар.
 
 
 ### src/Domain/CartItem.php
@@ -158,7 +158,7 @@ composer.lock не должен присутствовать в .gitignore
         return $this->redis = $redis;
     }
    ```
-Можно заменить на объявление свойств в  констуркторе - private readonly Redis $redis.
+   Можно заменить на объявление свойств в  констуркторе - private readonly Redis $redis.
 
 4.
     ```
